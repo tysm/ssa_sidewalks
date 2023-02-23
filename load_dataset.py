@@ -45,7 +45,7 @@ def unzip_file(file_path: str, output_dir: str) -> None:
 
 def main():
     # Set up command line arguments
-    parser = argparse.ArgumentParser(description='Download and unzip a zip dataset from Google Drive')
+    parser = argparse.ArgumentParser(description='Download and unzip a zip dataset from Google Drive.')
     parser.add_argument('dataset_name', type=str, help='Name of the dataset to download')
     parser.add_argument('dataset_url', type=str, help='URL of the dataset to download')
     parser.add_argument('download_dir', type=str, help='Directory to download the dataset to')
@@ -73,7 +73,6 @@ def main():
 
     # Extract the contents of the zip file to unzip_dir
     unzip_file(download_path, os.path.join(args.unzip_dir, args.dataset_name))
-
 
 if __name__ == '__main__':
     main()
