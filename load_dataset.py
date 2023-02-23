@@ -8,7 +8,7 @@ import requests
 
 def download_file_from_google_drive(file_url: str, download_path: str, replace_if_exists: bool = False) -> None:
     file_id = file_url.split('/')[-2]
-    download_url = f"https://drive.google.com/uc?id={file_id}&confirm={1}"
+    download_url = f"https://drive.google.com/uc?id={file_id}&confirm=1"
 
     # Check if download_path exists
     if os.path.exists(download_path):
