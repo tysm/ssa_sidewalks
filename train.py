@@ -134,8 +134,6 @@ def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
                     total_loss += criterion(predictions, masks).item()
 
                     predicted_masks = torch.argmax(nn.LogSoftmax(dim=1)(predictions), dim=1)
-                print(images.shape)
-                print(predicted_masks.shape)
 
                 # Save images
                 torchvision.utils.save_image(images, os.path.join(logs_dir, "images.png"))
