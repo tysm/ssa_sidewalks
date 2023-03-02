@@ -1,3 +1,7 @@
 requests
 pillow
 numpy
+torch==1.13.1
+albumentations
+tqdm
+torchvision
