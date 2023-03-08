@@ -39,14 +39,15 @@ def read_class_colors(dataset_dir):
 
 
 def compute_median_frequency_class_balancing_weights(loader, device):
-    num_classes = loader.dataset.num_classes
-    accumulator = torch.zeros(num_classes).to(device=device)
-    for _, masks, _, _ in loader:
-        masks = masks.long().to(device=device)
+    with torch.no_grad():
+        num_classes = loader.dataset.num_classes
+        accumulator = torch.zeros(num_classes).to(device=device)
+        for _, masks, _, _ in loader:
+            masks = masks.long().to(device=device)
 
-        # create one-hot encoding of masks for each class
-        masks_one_hot = torch.zeros((masks.size(0), num_classes, masks.size(2), masks.size(3))).to(device=device)
-        masks_one_hot.scatter_(1, masks, 1)
+            # create one-hot encoding of masks for each class
+            masks_one_hot = torch.zeros((masks.size(0), num_classes, masks.size(2), masks.size(3))).to(device=device)
+            masks_one_hot.scatter_(1, masks, 1)
 
-        accumulator += masks_one_hot.sum(dim=(0, 2, 3))
-    return accumulator.median()/(accumulator + 1e-6) # adding epsilon to avoid divide by zero errors
+            accumulator += masks_one_hot.sum(dim=(0, 2, 3))
+        return accumulator.median()/(accumulator + 1e-6) # adding epsilon to avoid divide by zero errors
