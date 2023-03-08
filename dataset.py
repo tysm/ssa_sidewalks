@@ -7,9 +7,10 @@ from torch.utils import data
 
 
 class Dataset(data.Dataset): 
-    def __init__(self, items, transforms=None, images_transforms=None, masks_transforms=None):
+    def __init__(self, items, label_colors, transforms=None, images_transforms=None, masks_transforms=None):
         super(Dataset, self).__init__()
         self.items = items
+        self.label_colors = label_colors
         self.transforms = transforms
         self.images_transforms = images_transforms
         self.masks_transforms = masks_transforms
@@ -36,6 +37,17 @@ class Dataset(data.Dataset):
 
             items.append((image_path, mask_path))
         return items
+
+    @staticmethod
+    def read_label_colors(dataset_dir):
+        """
+        Reads the label_colors.txt dataset config and return a color list.
+        The list should map each index to a rgb color and assume unlabeled data
+        as 0 index.
+        """
+        with open(os.path.join(dataset_dir, "label_colors.txt"), "r") as colors_config:
+            colors = list(list(int(value) for value in line.split()[:3]) for line in colors_config.readlines())
+        return [[0, 0, 0], *colors]
 
     def read_item(self, index):
         assert index < len(self)
