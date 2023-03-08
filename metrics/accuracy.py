@@ -9,16 +9,16 @@ class Accuracy:
     def evaluate(self, predictions, masks):
         with torch.no_grad():
             # create one-hot encoding of masks for each class
-            masks_onehot = torch.zeros_like(predictions)
-            masks_onehot.scatter_(1, masks.unsqueeze(dim=1), 1)
+            masks_one_hot = torch.zeros_like(predictions)
+            masks_one_hot.scatter_(1, masks.unsqueeze(dim=1), 1)
 
             # create one-hot encoding of predicted labels for each class
-            predicted_onehot = torch.zeros_like(predictions)
-            predicted_onehot.scatter_(1, torch.argmax(predictions, dim=1, keepdim=True), 1)
+            predicted_one_hot = torch.zeros_like(predictions)
+            predicted_one_hot.scatter_(1, torch.argmax(predictions, dim=1, keepdim=True), 1)
             
             # compute matches and totals for all classes
-            matches = (predicted_onehot * masks_onehot).sum(dim=(2, 3))
-            totals = masks_onehot.sum(dim=(2, 3))
+            matches = (predicted_one_hot * masks_one_hot).sum(dim=(2, 3))
+            totals = masks_one_hot.sum(dim=(2, 3))
 
             if self._matches is None:
                 self._matches = matches.sum(dim=0)

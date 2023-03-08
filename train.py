@@ -12,15 +12,15 @@ from tqdm import tqdm
 from albumentations.pytorch import ToTensorV2
 from torch.utils import data
 
+import dataset as D
 import metrics as M
-import networks as NN
-from dataset import Dataset
+import networks as N
 
 
 def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
-    items = Dataset.find_items(os.path.join(dataset_dir, "images"), os.path.join(dataset_dir, "masks"), "jpg", "png")
+    items = D.find_items(os.path.join(dataset_dir, "images"), os.path.join(dataset_dir, "masks"), "jpg", "png")
     random.shuffle(items)
-    label_colors = Dataset.read_label_colors(dataset_dir)
+    class_colors = D.read_class_colors(dataset_dir)
 
     train_items = items[:math.ceil(len(items)*train_percentage)]
     train_transforms = A.Compose(
@@ -44,7 +44,7 @@ def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
         ]
     )
     train_masks_transforms = ToTensorV2()
-    train_dataset = Dataset(train_items, label_colors, train_transforms, train_images_transforms, train_masks_transforms)
+    train_dataset = D.Dataset(train_items, class_colors, train_transforms, train_images_transforms, train_masks_transforms)
     train_loader = data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=True, drop_last=True)
 
     val_items = items[math.ceil(len(items)*train_percentage):]
@@ -60,7 +60,7 @@ def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
         ]
     )
     val_masks_transforms = ToTensorV2()
-    val_dataset = Dataset(val_items, label_colors, val_transforms, val_image_transforms, val_masks_transforms)
+    val_dataset = D.Dataset(val_items, class_colors, val_transforms, val_image_transforms, val_masks_transforms)
     val_loader = data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False, drop_last=True)
 
     return train_loader, val_loader
@@ -123,7 +123,7 @@ def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
 def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
     model.eval()
 
-    color_tensor = torch.tensor(loader.dataset.label_colors)
+    color_tensor = torch.tensor(loader.dataset.class_colors).to(device=device)
     images_path = os.path.join(logs_dir, "images.png")
     masks_path = os.path.join(logs_dir, "masks.png")
     predictions_path = os.path.join(logs_dir, "predictions.png")
@@ -185,12 +185,13 @@ def main():
     parser.add_argument("--logs-dir", type=str)
     args = parser.parse_args()
 
+
     train_loader, val_loader = setup_loaders(args.dataset_dir, args.train_percentage, args.batch_size, args.workers)
-    model = NN.UNet(3, 3)
-    criterion = nn.CrossEntropyLoss()
+    model = N.UNet(3, 3)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(train_loader, device))
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scaler = torch.cuda.amp.GradScaler()
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     checkpoint = {}
     if args.load_checkpoint_path:

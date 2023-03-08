@@ -9,16 +9,16 @@ class IoU:
     def evaluate(self, predictions, masks):
         with torch.no_grad():
             # create one-hot encoding of masks for each class
-            masks_onehot = torch.zeros_like(predictions)
-            masks_onehot.scatter_(1, masks.unsqueeze(dim=1), 1)
+            masks_one_hot = torch.zeros_like(predictions)
+            masks_one_hot.scatter_(1, masks.unsqueeze(dim=1), 1)
 
             # create one-hot encoding of predicted labels for each class
-            predicted_onehot = torch.zeros_like(predictions)
-            predicted_onehot.scatter_(1, torch.argmax(predictions, dim=1, keepdim=True), 1)
+            predicted_one_hot = torch.zeros_like(predictions)
+            predicted_one_hot.scatter_(1, torch.argmax(predictions, dim=1, keepdim=True), 1)
             
             # compute intersection and union for all classes
-            intersection = (predicted_onehot * masks_onehot).sum(dim=(2, 3))
-            union = predicted_onehot.sum(dim=(2, 3)) + masks_onehot.sum(dim=(2, 3)) - intersection
+            intersection = (predicted_one_hot * masks_one_hot).sum(dim=(2, 3))
+            union = predicted_one_hot.sum(dim=(2, 3)) + masks_one_hot.sum(dim=(2, 3)) - intersection
 
             if self._intersection is None:
                 self._intersection = intersection.sum(dim=0)

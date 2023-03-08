@@ -1,53 +1,17 @@
-import os
-import glob
-
 import numpy as np
 from PIL import Image
 from torch.utils import data
 
 
 class Dataset(data.Dataset): 
-    def __init__(self, items, label_colors, transforms=None, images_transforms=None, masks_transforms=None):
+    def __init__(self, items, class_colors, transforms=None, images_transforms=None, masks_transforms=None):
         super(Dataset, self).__init__()
         self.items = items
-        self.label_colors = label_colors
+        self.class_colors = class_colors
+        self.num_classes = len(class_colors)
         self.transforms = transforms
         self.images_transforms = images_transforms
         self.masks_transforms = masks_transforms
-
-    @staticmethod
-    def find_items(images_dir, masks_dir, image_ext, mask_ext):
-        """
-        Find image and segmentation mask files and return a list of
-        tuples of them.
-        """
-        items = []
-        images = glob.glob(f"{images_dir}/**/*.{image_ext}", recursive=True)
-        for image_path in images:
-            _images_dir, image_basename = os.path.split(image_path)
-
-            common_path = ""
-            while not os.path.samefile(_images_dir, images_dir):
-                common_path = os.path.join(os.path.basename(_images_dir))
-                _images_dir = os.path.dirname(_images_dir)
-
-            mask_basename = f"{os.path.splitext(image_basename)[0]}.{mask_ext}"
-            mask_path = os.path.join(masks_dir, common_path, mask_basename)
-            assert os.path.exists(mask_path)
-
-            items.append((image_path, mask_path))
-        return items
-
-    @staticmethod
-    def read_label_colors(dataset_dir):
-        """
-        Reads the label_colors.txt dataset config and return a color list.
-        The list should map each index to a rgb color and assume unlabeled data
-        as 0 index.
-        """
-        with open(os.path.join(dataset_dir, "label_colors.txt"), "r") as colors_config:
-            colors = list(list(int(value) for value in line.split()[:3]) for line in colors_config.readlines())
-        return [[0, 0, 0], *colors]
 
     def read_item(self, index):
         assert index < len(self)
