@@ -95,7 +95,7 @@ def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics):
 
 def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
     model.train()
-    loss_accumulator = torch.zeros(1, requires_grad=False).float().to(device=device)
+    loss_accumulator = 0
     with tqdm(loader, desc=f"Training epoch {epoch_index}") as progress_container:
         for batch_index, (images, masks, _, _) in enumerate(progress_container):
             images = images.to(device=device)
@@ -106,7 +106,7 @@ def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
                 predictions = model(images)
                 loss = criterion(predictions, masks)
 
-                loss_accumulator += loss
+                loss_accumulator += loss.item()
 
             # Backward
             optimizer.zero_grad()
@@ -115,7 +115,7 @@ def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
             scaler.update()
 
             # Update tqdm
-            _loss = (loss_accumulator/(batch_index+1)).item()
+            _loss = loss_accumulator/(batch_index+1)
             progress_container.set_postfix(batch=batch_index, loss=_loss)
     model.eval()
 
