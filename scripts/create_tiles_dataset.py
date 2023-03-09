@@ -114,6 +114,7 @@ def create_tiles_dataset(base_dataset_dir: str, num_classes: int, scale_factor: 
                     mask_tile.close()
         processed_count += 1
         print(f"{processed_count}/{len(base_image_names)} processed")
+    shutil.copy(os.path.join(base_dataset_dir, "label_colors.txt"), os.path.join(output_dataset_dir, "class_colors.txt"))
 
 
 def remove_extra_tiles_per_class(dataset_dir: str, num_classes: int) -> None:
