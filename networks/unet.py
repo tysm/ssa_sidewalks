@@ -60,7 +60,7 @@ class UNet(nn.Module):
 
             encoder_activation = encoder_activations[-1-i]
             if x.shape != encoder_activation.shape:
-                x = x.resize_(*encoder_activation.shape[2:])
+                x = x.resize_(*encoder_activation.shape[2:])  # FIXME can't resize
             x = torch.cat((encoder_activation, x), dim=1)
 
         return self.semantic_head(x)

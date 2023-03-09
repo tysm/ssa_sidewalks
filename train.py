@@ -15,6 +15,7 @@ import utils as U
 def setup_loaders(args):
     training_transforms = A.Compose(
         [
+            A.Resize(256, 256),
             A.Rotate(),
             A.HorizontalFlip(),
             A.VerticalFlip(),
@@ -35,6 +36,7 @@ def setup_loaders(args):
     training_masks_transforms = ToTensorV2()
     training_loader = D.setup_loader(args.training_dataset_dir, training_transforms, training_images_transforms, training_masks_transforms, args.batch_size, args.workers, True, True)
 
+    evaluation_transforms = A.Resize(256, 256)
     evaluation_images_transforms = A.Compose(
         [
             A.Normalize(
@@ -46,7 +48,7 @@ def setup_loaders(args):
         ]
     )
     evaluation_masks_transforms = ToTensorV2()
-    evaluation_loader = D.setup_loader(args.evaluation_dataset_dir, None, evaluation_images_transforms, evaluation_masks_transforms, args.batch_size, args.workers, False, True)
+    evaluation_loader = D.setup_loader(args.evaluation_dataset_dir, evaluation_transforms, evaluation_images_transforms, evaluation_masks_transforms, args.batch_size, args.workers, False, True)
 
     return training_loader, evaluation_loader
 
