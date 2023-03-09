@@ -95,7 +95,7 @@ def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics):
 
 def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
     model.train()
-    loss_accumulator = torch.zeros(1).float().to(device=device)
+    loss_accumulator = torch.zeros(1, requires_grad=False).float().to(device=device)
     with tqdm(loader, desc=f"Training epoch {epoch_index}") as progress_container:
         for batch_index, (images, masks, _, _) in enumerate(progress_container):
             images = images.to(device=device)
@@ -121,18 +121,18 @@ def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
 
 
 def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
-    model.eval()
-
-    color_tensor = torch.tensor(loader.dataset.class_colors).to(device=device)
-    images_path = os.path.join(logs_dir, "images.png")
-    masks_path = os.path.join(logs_dir, "masks.png")
-    predictions_path = os.path.join(logs_dir, "predictions.png")
-
-    iou_accumulator = M.IoU()
-    accuracy_accumulator = M.Accuracy()
-    loss_accumulator = torch.zeros(1).float().to(device=device)
-
     with torch.no_grad():
+        model.eval()
+
+        color_tensor = torch.tensor(loader.dataset.class_colors).to(device=device)
+        images_path = os.path.join(logs_dir, "images.png")
+        masks_path = os.path.join(logs_dir, "masks.png")
+        predictions_path = os.path.join(logs_dir, "predictions.png")
+
+        iou_accumulator = M.IoU()
+        accuracy_accumulator = M.Accuracy()
+        loss_accumulator = torch.zeros(1).float().to(device=device)
+
         with tqdm(loader, desc=f"Evaluating epoch {epoch_index}") as progress_container:
             for batch_index, (images, masks, _, _) in enumerate(progress_container):
                 images = images.to(device=device)
