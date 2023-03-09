@@ -3,63 +3,8 @@ import os
 import torch
 import torchvision
 from tqdm import tqdm
-from torch.utils import data
 
 import metrics as M
-
-
-def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics):
-    checkpoint_path = os.path.join(checkpoints_dir, f"checkpoint_epoch_{epoch_index}.pth.tar")
-    print(f'Saving checkpoint to "{checkpoint_path}"')
-
-    checkpoint = {
-        "epoch": epoch_index,
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-        "metrics": metrics
-    }
-    torch.save(checkpoint, checkpoint_path)
-
-    print(f'Saved checkpoint to "{checkpoint_path}"')
-    return checkpoint
-
-
-def load_checkpoint(checkpoint_path, model, optimizer):
-    print(f'Loading checkpoint from "{checkpoint_path}"')
-
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-
-    print(f'Loaded checkpoint from "{checkpoint_path}"')
-    return checkpoint, model, optimizer
-
-
-def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
-    model.train()
-    loss_accumulator = 0
-    with tqdm(loader, desc=f"Training epoch {epoch_index}") as progress_container:
-        for batch_index, (images, masks, _, _) in enumerate(progress_container):
-            images = images.to(device=device)
-            masks = masks.squeeze(dim=1).long().to(device=device)
-
-            # Forward
-            with torch.cuda.amp.autocast():
-                predictions = model(images)
-                loss = criterion(predictions, masks)
-
-                loss_accumulator += loss.item()
-
-            # Backward
-            optimizer.zero_grad()
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-
-            # Update tqdm
-            _loss = loss_accumulator/(batch_index+1)
-            progress_container.set_postfix(batch=batch_index, loss=_loss)
-    model.eval()
 
 
 def evaluate(logs_dir, epoch_index, loader, model, criterion, device):

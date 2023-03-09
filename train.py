@@ -8,7 +8,7 @@ from albumentations.pytorch import ToTensorV2
 
 import dataset as D
 import networks as N
-from utils import save_checkpoint, load_checkpoint, train, evaluate
+import utils as U
 
 
 def setup_loaders(args):
@@ -75,12 +75,12 @@ def main():
 
     checkpoint = {}
     if args.load_checkpoint_path:
-        checkpoint, model, optimizer = load_checkpoint(args.load_checkpoint_path, model, optimizer)
+        checkpoint, model, optimizer = U.load_checkpoint(args.load_checkpoint_path, model, optimizer)
 
     for epoch_index in range(checkpoint["epoch"]+1 if checkpoint else 0, args.epochs):
-        train(epoch_index, training_loader, model, criterion, optimizer, scaler, device)
-        metrics = evaluate(args.logs_dir, epoch_index, evaluation_loader, model, criterion, device)
-        checkpoint = save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics)
+        U.train(epoch_index, training_loader, model, criterion, optimizer, scaler, device)
+        metrics = U.evaluate(args.logs_dir, epoch_index, evaluation_loader, model, criterion, device)
+        checkpoint = U.save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics)
 
 
 if __name__ == "__main__":
