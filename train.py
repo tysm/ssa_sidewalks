@@ -90,8 +90,8 @@ def main():
         )
 
     training_loader, evaluation_loader = setup_loaders(args)
-    model = N.UNet(3, training_loader.dataset.num_classes)
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = N.UNet(3, training_loader.dataset.num_classes).to(device=device)
     criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(training_loader, device))
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scaler = torch.cuda.amp.GradScaler()
