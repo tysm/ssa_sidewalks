@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import albumentations as A
+import wandb
 from albumentations.pytorch import ToTensorV2
 
 import dataset as D
@@ -64,7 +65,28 @@ def main():
     parser.add_argument("--checkpoints-dir", type=str, required=True)
     parser.add_argument("--load-checkpoint-path", type=str)
     parser.add_argument("--logs-dir", type=str, required=True)
+    parser.add_argument("--wandb-project", type=str)
+    parser.add_argument("--wandb-key", type=str)
     args = parser.parse_args()
+
+    wandb_run = None
+    if args.wandb_project is not None:
+        wandb.login(key=args.wandb_key)
+        wandb_run = wandb.init(
+            project=args.wandb_project,
+            config={
+                "wandb-project": args.wandb_project,
+                "training-dataset-dir": args.training_dataset_dir,
+                "evaluation-dataset-dir": args.evaluation_dataset_dir,
+                "batch-size": args.batch_size,
+                "workers": args.workers,
+                "epochs": args.epochs,
+                "learning-rate": args.learning_rate,
+                "checkpoints-dir": args.checkpoints_dir,
+                "load-checkpoint-path": args.load_checkpoint_path,
+                "logs-dir": args.logs_dir,
+            }
+        )
 
     training_loader, evaluation_loader = setup_loaders(args)
     model = N.UNet(3, training_loader.dataset.num_classes)
@@ -75,12 +97,12 @@ def main():
 
     checkpoint = {}
     if args.load_checkpoint_path:
-        checkpoint, model, optimizer = U.load_checkpoint(args.load_checkpoint_path, model, optimizer)
+        checkpoint, model, optimizer = U.load_checkpoint(args.load_checkpoint_path, model, optimizer, wandb_run)
 
     for epoch_index in range(checkpoint["epoch"]+1 if checkpoint else 0, args.epochs):
-        U.train(epoch_index, training_loader, model, criterion, optimizer, scaler, device)
-        metrics = U.evaluate(args.logs_dir, epoch_index, evaluation_loader, model, criterion, device)
-        checkpoint = U.save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics)
+        U.train(epoch_index, training_loader, model, criterion, optimizer, scaler, device, wandb_run)
+        metrics = U.evaluate(epoch_index, evaluation_loader, model, criterion, device, args.logs_dir, wandb_run)
+        checkpoint = U.save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics, wandb_run)
 
 
 if __name__ == "__main__":

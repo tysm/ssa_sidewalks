@@ -1,9 +1,10 @@
 import os
 
 import torch
+import wandb
 
 
-def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics):
+def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics, wandb_run=None):
     checkpoint_path = os.path.join(checkpoints_dir, f"checkpoint_epoch_{epoch_index}.pth.tar")
     print(f'Saving checkpoint to "{checkpoint_path}"')
 
@@ -19,7 +20,7 @@ def save_checkpoint(checkpoints_dir, epoch_index, model, optimizer, metrics):
     return checkpoint
 
 
-def load_checkpoint(checkpoint_path, model, optimizer):
+def load_checkpoint(checkpoint_path, model, optimizer, wandb_run=None):
     print(f'Loading checkpoint from "{checkpoint_path}"')
 
     checkpoint = torch.load(checkpoint_path)

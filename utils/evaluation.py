@@ -7,7 +7,10 @@ from tqdm import tqdm
 import metrics as M
 
 
-def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
+def evaluate(epoch_index, loader, model, criterion, device, logs_dir, wandb_run=None):
+    if len(loader) == 0:
+        return
+
     with torch.no_grad():
         model.eval()
 
@@ -49,10 +52,21 @@ def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
                 _mean_accuracy = accuracy_accumulator.mean_accuracy().item()
                 _loss = (loss_accumulator/(batch_index+1)).item()
                 progress_container.set_postfix(batch=batch_index, miou=_mean_iou, macc=_mean_accuracy, iou=_iou, acc=_accuracy, loss=_loss)
+        if wandb_run is not None:
+            wandb_run.log(
+                {
+                    "evaluation_iou": iou_accumulator.iou().tolist(),
+                    "evaluation_miou": iou_accumulator.mean_iou().item(),
+                    "evaluation_acc": accuracy_accumulator.accuracy().tolist(),
+                    "evaluation_macc": accuracy_accumulator.mean_accuracy().item(),
+                    "evaluation_loss": (loss_accumulator/len(loader)).item()
+                },
+                step=epoch_index
+            )
         return {
             "iou": iou_accumulator.iou().tolist(),
             "miou": iou_accumulator.mean_iou().item(),
             "acc": accuracy_accumulator.accuracy().tolist(),
             "macc": accuracy_accumulator.mean_accuracy().item(),
-            "loss": (loss_accumulator/len(loader)).item(),
+            "loss": (loss_accumulator/len(loader)).item()
         }

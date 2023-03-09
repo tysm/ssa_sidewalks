@@ -1,7 +1,10 @@
 import torch
 from tqdm import tqdm
 
-def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
+def train(epoch_index, loader, model, criterion, optimizer, scaler, device, wandb_run=None):
+    if len(loader) == 0:
+        return
+
     model.train()
     loss_accumulator = 0
     with tqdm(loader, desc=f"Training epoch {epoch_index}") as progress_container:
@@ -26,3 +29,10 @@ def train(epoch_index, loader, model, criterion, optimizer, scaler, device):
             _loss = loss_accumulator/(batch_index+1)
             progress_container.set_postfix(batch=batch_index, loss=_loss)
     model.eval()
+    if wandb_run is not None:
+        wandb_run.log(
+            {
+                "training_loss": loss_accumulator/len(loader)
+            },
+            step=epoch_index
+        )
