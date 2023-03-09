@@ -15,7 +15,7 @@ MASKS_DIR = "gtFine/default"
 MASKS_SUFFIX = "_gtFine_labelIds.png"
 
 
-def extract_tiles_dataset(base_dataset_dir: str, num_classes: int, scale_factor: float, max_num_tiles_per_image_per_class: int, tile_height: int, tile_width: int, output_dataset_dir: str) -> None:
+def create_tiles_dataset(base_dataset_dir: str, num_classes: int, scale_factor: float, max_num_tiles_per_image_per_class: int, tile_height: int, tile_width: int, output_dataset_dir: str) -> None:
     # Check that dataset_dir exists and is a directory
     if os.path.exists(base_dataset_dir):
         if not os.path.isdir(base_dataset_dir):
@@ -196,7 +196,7 @@ def remove_extra_tiles_per_class(dataset_dir: str, num_classes: int) -> None:
 
 def main():
     # Set up command line arguments
-    parser = argparse.ArgumentParser(description='Extract random tiles separated by classes from a Cityscapes1.0-like dataset.')
+    parser = argparse.ArgumentParser(description='Create a dataset by extracting random tiles separated by classes from a Cityscapes1.0-like dataset.')
     parser.add_argument('dataset_dir', type=str, help='Cityscapes1.0-like base dataset directory')
     parser.add_argument('scale_factor', type=float, help="Scale factor to apply on dataset images and masks before tile extraction")
     parser.add_argument('max_num_tiles_per_image_per_class', type=int, help='Maximum number of extracted tiles per class per image')
@@ -217,7 +217,7 @@ def main():
     base_dataset_name = os.path.basename(args.dataset_dir)
     output_dataset_dir = os.path.join(args.output_dir, f"{base_dataset_name}_{args.scale_factor}_{args.tile_width}x{args.tile_height}_tiles")
 
-    extract_tiles_dataset(args.dataset_dir, num_classes, args.scale_factor, args.max_num_tiles_per_image_per_class, args.tile_height, args.tile_width, output_dataset_dir)
+    create_tiles_dataset(args.dataset_dir, num_classes, args.scale_factor, args.max_num_tiles_per_image_per_class, args.tile_height, args.tile_width, output_dataset_dir)
     remove_extra_tiles_per_class(output_dataset_dir, num_classes)
 
 if __name__ == "__main__":

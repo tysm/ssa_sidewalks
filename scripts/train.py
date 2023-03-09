@@ -74,6 +74,7 @@ def main():
         wandb.login(key=args.wandb_key)
         wandb_run = wandb.init(
             project=args.wandb_project,
+            job_type="training",
             config={
                 "wandb-project": args.wandb_project,
                 "training-dataset-dir": args.training_dataset_dir,
