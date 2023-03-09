@@ -142,8 +142,8 @@ def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
                 with torch.cuda.amp.autocast():
                     predictions = model(images)
 
-                    iou_accumulator.evaluate(predictions, masks)
-                    accuracy_accumulator.evaluate(predictions, masks)
+                    iou_accumulator.evaluate(predictions, masks, device)
+                    accuracy_accumulator.evaluate(predictions, masks, device)
                     loss_accumulator += criterion(predictions, masks)
 
                     predicted_masks = torch.argmax(predictions, dim=1)
@@ -162,13 +162,13 @@ def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
                 _mean_accuracy = accuracy_accumulator.mean_accuracy().item()
                 _loss = (loss_accumulator/(batch_index+1)).item()
                 progress_container.set_postfix(batch=batch_index, miou=_mean_iou, macc=_mean_accuracy, iou=_iou, acc=_accuracy, loss=_loss)
-    return {
-        "iou": iou_accumulator.iou().tolist(),
-        "miou": iou_accumulator.mean_iou().item(),
-        "acc": accuracy_accumulator.accuracy().tolist(),
-        "macc": accuracy_accumulator.mean_accuracy().item(),
-        "loss": (loss_accumulator/loader.size()).item(),
-    }
+        return {
+            "iou": iou_accumulator.iou().tolist(),
+            "miou": iou_accumulator.mean_iou().item(),
+            "acc": accuracy_accumulator.accuracy().tolist(),
+            "macc": accuracy_accumulator.mean_accuracy().item(),
+            "loss": (loss_accumulator/len(loader)).item(),
+        }
 
 
 def main():
