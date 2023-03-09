@@ -55,15 +55,15 @@ def setup_loaders(args):
 def main():
     # Set up command line arguments
     parser = argparse.ArgumentParser(description="Train a model.")
-    parser.add_argument("--training-dataset-dir", type=str)
-    parser.add_argument("--evaluation-dataset-dir", type=str)
-    parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--workers", type=int)
-    parser.add_argument("--epochs", type=int)
-    parser.add_argument("--learning-rate", type=float)
-    parser.add_argument("--checkpoints-dir", type=str)
+    parser.add_argument("--training-dataset-dir", type=str, required=True)
+    parser.add_argument("--evaluation-dataset-dir", type=str, required=True)
+    parser.add_argument("--batch-size", type=int, required=True)
+    parser.add_argument("--workers", type=int, required=True)
+    parser.add_argument("--epochs", type=int, required=True)
+    parser.add_argument("--learning-rate", type=float, required=True)
+    parser.add_argument("--checkpoints-dir", type=str, required=True)
     parser.add_argument("--load-checkpoint-path", type=str)
-    parser.add_argument("--logs-dir", type=str)
+    parser.add_argument("--logs-dir", type=str, required=True)
     args = parser.parse_args()
 
     training_loader, evaluation_loader = setup_loaders(args)
