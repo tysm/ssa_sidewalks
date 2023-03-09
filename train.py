@@ -17,13 +17,8 @@ import metrics as M
 import networks as N
 
 
-def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
-    items = D.find_items(os.path.join(dataset_dir, "images"), os.path.join(dataset_dir, "masks"), "jpg", "png")
-    random.shuffle(items)
-    class_colors = D.read_class_colors(dataset_dir)
-
-    train_items = items[:math.ceil(len(items)*train_percentage)]
-    train_transforms = A.Compose(
+def setup_loaders(args):
+    training_transforms = A.Compose(
         [
             A.Resize(height=64, width=64),
             A.Rotate(),
@@ -31,7 +26,7 @@ def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
             A.VerticalFlip(),
         ]
     )
-    train_images_transforms = A.Compose(
+    training_images_transforms = A.Compose(
         [
             A.ColorJitter(),
             A.GaussianBlur(),
@@ -43,13 +38,11 @@ def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
             ToTensorV2()
         ]
     )
-    train_masks_transforms = ToTensorV2()
-    train_dataset = D.Dataset(train_items, class_colors, train_transforms, train_images_transforms, train_masks_transforms)
-    train_loader = data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=True, drop_last=True)
+    training_masks_transforms = ToTensorV2()
+    training_loader = D.setup_loader(args.training_dataset_dir, training_transforms, training_images_transforms, training_masks_transforms, args.batch_size, args.workers, True, True)
 
-    val_items = items[math.ceil(len(items)*train_percentage):]
-    val_transforms = A.Resize(height=64, width=64)
-    val_image_transforms = A.Compose(
+    evaluation_transforms = A.Resize(height=64, width=64)
+    evaluation_images_transforms = A.Compose(
         [
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
@@ -59,11 +52,10 @@ def setup_loaders(dataset_dir, train_percentage, batch_size, workers):
             ToTensorV2()
         ]
     )
-    val_masks_transforms = ToTensorV2()
-    val_dataset = D.Dataset(val_items, class_colors, val_transforms, val_image_transforms, val_masks_transforms)
-    val_loader = data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False, drop_last=True)
+    evaluation_masks_transforms = ToTensorV2()
+    evaluation_loader = D.setup_loader(args.evaluation_dataset_dir, evaluation_transforms, evaluation_images_transforms, evaluation_masks_transforms, args.batch_size, args.workers, False, True)
 
-    return train_loader, val_loader
+    return training_loader, evaluation_loader
 
 
 def load_checkpoint(checkpoint_path, model, optimizer):
@@ -174,8 +166,8 @@ def evaluate(logs_dir, epoch_index, loader, model, criterion, device):
 def main():
     # Set up command line arguments
     parser = argparse.ArgumentParser(description="Train a model.")
-    parser.add_argument("--dataset-dir", type=str)
-    parser.add_argument("--train-percentage", type=float)
+    parser.add_argument("--training-dataset-dir", type=str)
+    parser.add_argument("--evaluation-dataset-dir", type=str)
     parser.add_argument("--batch-size", type=int)
     parser.add_argument("--workers", type=int)
     parser.add_argument("--epochs", type=int)
@@ -186,10 +178,10 @@ def main():
     args = parser.parse_args()
 
 
-    train_loader, val_loader = setup_loaders(args.dataset_dir, args.train_percentage, args.batch_size, args.workers)
-    model = N.UNet(3, 3)
+    training_loader,  evaluation_loader = setup_loaders(args)
+    model = N.UNet(3, training_loader.dataset.num_classes)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(train_loader, device))
+    criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(training_loader, device))
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scaler = torch.cuda.amp.GradScaler()
 
@@ -198,8 +190,8 @@ def main():
         checkpoint, model, optimizer = load_checkpoint(args.load_checkpoint_path, model, optimizer)
 
     for epoch_index in range(checkpoint["epoch"]+1 if checkpoint else 0, args.epochs):
-        train(epoch_index, train_loader, model, criterion, optimizer, scaler, device)
-        metrics = evaluate(args.logs_dir, epoch_index, val_loader, model, criterion, device)
+        train(epoch_index, training_loader, model, criterion, optimizer, scaler, device)
+        metrics = evaluate(args.logs_dir, epoch_index, evaluation_loader, model, criterion, device)
         checkpoint = save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics)
 
 

@@ -2,6 +2,9 @@ import os
 import glob
 
 import torch
+from torch.utils import data
+
+from dataset.dataset import Dataset
 
 
 def find_items(images_dir, masks_dir, image_ext, mask_ext):
@@ -36,6 +39,13 @@ def read_class_colors(dataset_dir):
     with open(os.path.join(dataset_dir, "class_colors.txt"), "r") as colors_config:
         colors = list(list(int(value) for value in line.split()[:3]) for line in colors_config.readlines())
     return [[0, 0, 0], *colors]
+
+
+def setup_loader(dataset_dir, transforms, images_transforms, masks_transforms, batch_size, workers, shuffle, drop_last):
+    items = find_items(os.path.join(dataset_dir, "images"), os.path.join(dataset_dir, "masks"), "jpg", "png")
+    class_colors = read_class_colors(dataset_dir)
+    dataset = Dataset(items, class_colors, transforms, images_transforms, masks_transforms)
+    return data.DataLoader(dataset, batch_size=batch_size, num_workers=workers, shuffle=shuffle, drop_last=drop_last)
 
 
 def compute_median_frequency_class_balancing_weights(loader, device):
