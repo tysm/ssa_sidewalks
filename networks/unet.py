@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class Conv2dBnRelu(nn.Module):
@@ -61,7 +60,7 @@ class UNet(nn.Module):
 
             encoder_activation = encoder_activations[-1-i]
             if x.shape != encoder_activation.shape:
-                x = F.resize(x, size=encoder_activation.shape[2:])
+                x = x.resize_(*encoder_activation.shape[2:])
             x = torch.cat((encoder_activation, x), dim=1)
 
         return self.semantic_head(x)
