@@ -59,6 +59,7 @@ def main():
     parser.add_argument("--training-dataset-dir", type=str, required=True)
     parser.add_argument("--evaluation-dataset-dir", type=str, required=True)
     parser.add_argument("--architecture", type=str, required=True)
+    parser.add_argument("--pretrained", type=bool, action="store_true", default=False)
     parser.add_argument("--batch-size", type=int, required=True)
     parser.add_argument("--workers", type=int, required=True)
     parser.add_argument("--epochs", type=int, required=True)
@@ -81,6 +82,7 @@ def main():
                 "training-dataset-dir": args.training_dataset_dir,
                 "evaluation-dataset-dir": args.evaluation_dataset_dir,
                 "architecture": args.architecture,
+                "pretrained": args.pretrained,
                 "batch-size": args.batch_size,
                 "workers": args.workers,
                 "epochs": args.epochs,
@@ -93,7 +95,7 @@ def main():
 
     training_loader, evaluation_loader = setup_loaders(args)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = N.get_model(args.architecture, 3, training_loader.dataset.num_classes).to(device=device)
+    model = N.get_model(args.architecture, 3, training_loader.dataset.num_classes, args.pretrained).to(device=device)
     criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(training_loader, device))
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scaler = torch.cuda.amp.GradScaler()
