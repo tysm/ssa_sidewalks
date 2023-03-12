@@ -24,12 +24,13 @@ class SegNet(nn.Module):
 
         # Decoder
         in_features = 512
-        decoder_conv_structure = reversed([(2, 64), (2, 128), (3, 256), (3, 512), (3, 512)])
+        decoder_conv_structure = reversed([(2, 64), (2, 64), (3, 128), (3, 256), (3, 512)])
         self.decoder = nn.ModuleList()
         for num_convs, out_features in decoder_conv_structure:
             conv_block = nn.Sequential(Conv2dBnRelu(in_features, out_features))
             for _ in range(1, num_convs):
                 conv_block.append(Conv2dBnRelu(out_features, out_features))
+            self.decoder.append(conv_block)
             in_features = out_features
         self.unpool = nn.MaxUnpool2d(2, stride=2)
 
