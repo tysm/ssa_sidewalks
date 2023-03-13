@@ -28,7 +28,7 @@ class HMSANet(nn.Module):
             resnet.layer3,
             resnet.layer4
         )
-        backbone_out_channels = 2048
+        backbone_out_channels = 512
 
         self.attention_head = nn.Sequential(
             DoubleConv2dBnReluConv1x1(backbone_out_channels, 256, 1),
