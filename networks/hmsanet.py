@@ -15,7 +15,7 @@ class HMSANet(nn.Module):
         self._training_low_scale_factor = 0.5
         self._evaluation_scale_factors = [0.25, 0.5, 1.0, 2.0]
 
-        resnet = models.resnet50(pretrained=pretrained)
+        resnet = models.resnet18(pretrained=pretrained)
         self.backbone = nn.Sequential(
             nn.Sequential(
                 resnet.conv1 if in_channels == 3 else nn.Conv2d(in_channels, 64, 7, stride=2, padding=3, bias=False),
