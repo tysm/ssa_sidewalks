@@ -23,7 +23,7 @@ def setup_loaders(args):
         )
     ]
     if args.pretrained:
-        shared_image_transforms.append(0,
+        shared_image_transforms.append(
             A.Normalize(
                 mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225],

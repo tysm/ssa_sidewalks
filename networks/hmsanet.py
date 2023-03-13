@@ -16,19 +16,17 @@ class HMSANet(nn.Module):
         self._evaluation_scale_factors = [0.25, 0.5, 1.0, 2.0]
 
         resnet = models.resnet50(pretrained=pretrained)
-        self.backbone = nn.ModuleList(
-            modules=[
-                nn.Sequential(
-                    resnet.conv1 if in_channels == 3 else nn.Conv2d(in_channels, 64, 7, stride=2, padding=3, bias=False),
-                    resnet.bn1,
-                    resnet.relu,
-                    resnet.maxpool
-                ),
-                resnet.layer1,
-                resnet.layer2,
-                resnet.layer3,
-                resnet.layer4
-            ]
+        self.backbone = nn.Sequential(
+            nn.Sequential(
+                resnet.conv1 if in_channels == 3 else nn.Conv2d(in_channels, 64, 7, stride=2, padding=3, bias=False),
+                resnet.bn1,
+                resnet.relu,
+                resnet.maxpool
+            ),
+            resnet.layer1,
+            resnet.layer2,
+            resnet.layer3,
+            resnet.layer4
         )
         backbone_out_channels = 2048
 
@@ -41,14 +39,13 @@ class HMSANet(nn.Module):
 
     def _forward(self, x):
         logits = self.backbone(x)
-        attention_logits = self.attention_head(x)
+        attention_logits = self.attention_head(logits)
 
         logits = scale_as(logits, x)
         attention_logits = scale_as(attention_logits, x)
         return logits, attention_logits
 
     def _training_forward(self, x):
-        print("training")
         x_lo, x_hi = resize(x, self._training_low_scale_factor), x
 
         logits_lo, attention_logits = self._forward(x_lo)
@@ -61,7 +58,6 @@ class HMSANet(nn.Module):
         return logits_lo + (1 - attention_logits) * logits_hi
 
     def _evaluation_forward(self, x):
-        print("evaluation")
         assert 1.0 in self._evaluation_scale_factors
         scale_factors = sorted(self._evaluation_scale_factors, reverse=True)
 
@@ -84,5 +80,5 @@ class HMSANet(nn.Module):
                 logits = scaled_logits + (1 - scaled_attention_logits) * logits
         return logits
 
-    def forward(self, x, training=True):
-        return self._training_forward(x) if training else self._evaluation_forward(x)
+    def forward(self, x):
+        return self._training_forward(x) if self.training else self._evaluation_forward(x)
