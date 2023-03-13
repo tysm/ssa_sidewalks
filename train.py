@@ -13,15 +13,27 @@ import utils as U
 
 
 def setup_loaders(args):
+    shared_image_transforms = [
+        A.CLAHE(always_apply=True),
+        A.Normalize(
+            mean=[0.0, 0.0, 0.0],
+            std=[1.0, 1.0, 1.0],
+            max_pixel_value=255.0,
+        )
+    ]
+    if args.pretrained:
+        shared_image_transforms.append(0,
+            A.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+                max_pixel_value=1.0,
+            )
+        )
+
     training_transforms = A.Resize(64, 64)
     training_images_transforms = A.Compose(
         [
-            A.CLAHE(always_apply=True),
-            A.Normalize(
-                mean=[0.0, 0.0, 0.0],
-                std=[1.0, 1.0, 1.0],
-                max_pixel_value=255.0,
-            ),
+            *shared_image_transforms,
             ToTensorV2()
         ]
     )
@@ -40,12 +52,7 @@ def setup_loaders(args):
             [
                 A.ColorJitter(),
                 A.GaussianBlur(),
-                A.CLAHE(always_apply=True),
-                A.Normalize(
-                    mean=[0.0, 0.0, 0.0],
-                    std=[1.0, 1.0, 1.0],
-                    max_pixel_value=255.0,
-                ),
+                *shared_image_transforms,
                 ToTensorV2()
             ]
         )
@@ -54,12 +61,7 @@ def setup_loaders(args):
     evaluation_transforms = A.Resize(64, 64)
     evaluation_images_transforms = A.Compose(
         [
-            A.CLAHE(always_apply=True),
-            A.Normalize(
-                mean=[0.0, 0.0, 0.0],
-                std=[1.0, 1.0, 1.0],
-                max_pixel_value=255.0,
-            ),
+            *shared_image_transforms,
             ToTensorV2()
         ]
     )
