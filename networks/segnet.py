@@ -1,7 +1,7 @@
-import torch
 import torch.nn as nn
 from torchvision import models
-from networks.utils import Conv2dBnRelu
+
+from networks.utils import Conv2dBnRelu, DoubleConv2dBnReluConv1x1
 
 
 class SegNet(nn.Module):
@@ -35,7 +35,7 @@ class SegNet(nn.Module):
         self.unpool = nn.MaxUnpool2d(2, stride=2)
 
         # Head
-        self.head = nn.Conv2d(in_features, out_channels, 1)
+        self.head = DoubleConv2dBnReluConv1x1(in_features, 256, out_channels)
 
     def forward(self, x):
         encoder_activation_sizes = []

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from networks.utils import Conv2dBnRelu
+
+from networks.utils import Conv2dBnRelu, DoubleConv2dBnReluConv1x1, scale_as
 
 
 class UNet(nn.Module):
@@ -30,11 +31,7 @@ class UNet(nn.Module):
             in_features = 2*out_features
 
         # Head
-        self.head = nn.Sequential(
-            Conv2dBnRelu(in_features, in_features//2),
-            Conv2dBnRelu(in_features//2, in_features//2),
-            nn.Conv2d(in_features//2, out_channels, 1)
-        )
+        self.head = DoubleConv2dBnReluConv1x1(in_features, in_features//2, out_channels)
 
     def forward(self, x):
         encoder_activations = []
@@ -48,7 +45,7 @@ class UNet(nn.Module):
 
             encoder_activation = encoder_activations[-1-i]
             if x.shape != encoder_activation.shape:
-                x = x.resize_(*encoder_activation.shape[2:])  # FIXME can't resize
+                x = scale_as(x, encoder_activation)
             x = torch.cat((encoder_activation, x), dim=1)
 
         return self.head(x)
