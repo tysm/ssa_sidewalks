@@ -19,6 +19,7 @@ def setup_loaders(args):
             mean=[0.0, 0.0, 0.0],
             std=[1.0, 1.0, 1.0],
             max_pixel_value=255.0,
+            always_apply=True
         )
     ]
     if args.pretrained:
@@ -27,6 +28,7 @@ def setup_loaders(args):
                 mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225],
                 max_pixel_value=1.0,
+                always_apply=True
             )
         )
 
