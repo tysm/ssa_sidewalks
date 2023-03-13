@@ -76,6 +76,7 @@ def main():
     parser.add_argument("--data-augmentation", action="store_true", default=False)
     parser.add_argument("--batch-size", type=int, required=True)
     parser.add_argument("--workers", type=int, required=True)
+    parser.add_argument("--class_balancing_weights", action="store_true", default=False)
     parser.add_argument("--epochs", type=int, required=True)
     parser.add_argument("--learning-rate", type=float, required=True)
     parser.add_argument("--checkpoints-dir", type=str)
@@ -100,6 +101,7 @@ def main():
                 "data-augmentation": args.data_augmentation,
                 "batch-size": args.batch_size,
                 "workers": args.workers,
+                "class_balancing_weights": args.class_balancing_weights,
                 "epochs": args.epochs,
                 "learning-rate": args.learning_rate,
                 "checkpoints-dir": args.checkpoints_dir,
@@ -111,7 +113,7 @@ def main():
     training_loader, evaluation_loader = setup_loaders(args)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = N.get_model(args.architecture, 3, training_loader.dataset.num_classes, args.pretrained).to(device=device)
-    criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(training_loader, device))
+    criterion = nn.CrossEntropyLoss(weight=D.compute_median_frequency_class_balancing_weights(training_loader, device) if args.class_balancing_weights else None)
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scaler = torch.cuda.amp.GradScaler()
 
