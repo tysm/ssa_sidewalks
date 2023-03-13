@@ -32,7 +32,7 @@ def setup_loaders(args):
             )
         )
 
-    training_transforms = A.Resize(64, 64)
+    training_transforms = A.Resize(256, 256)
     training_images_transforms = A.Compose(
         [
             *shared_image_transforms,
@@ -44,7 +44,7 @@ def setup_loaders(args):
     if args.data_augmentation:
         training_transforms = A.Compose(
             [
-                A.Resize(64, 64),
+                A.Resize(256, 256),
                 A.Rotate(),
                 A.HorizontalFlip(),
                 A.VerticalFlip(),
@@ -60,7 +60,7 @@ def setup_loaders(args):
         )
     training_loader = D.setup_loader(args.training_dataset_dir, training_transforms, training_images_transforms, training_masks_transforms, args.batch_size, args.workers, True, True)
 
-    evaluation_transforms = A.Resize(64, 64)
+    evaluation_transforms = A.Resize(256, 256)
     evaluation_images_transforms = A.Compose(
         [
             *shared_image_transforms,
