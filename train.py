@@ -16,6 +16,7 @@ def setup_loaders(args):
     training_transforms = A.Resize(64, 64)
     training_images_transforms = A.Compose(
         [
+            A.CLAHE(p=1.0),
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
@@ -39,6 +40,7 @@ def setup_loaders(args):
             [
                 A.ColorJitter(),
                 A.GaussianBlur(),
+                A.CLAHE(p=1.0),
                 A.Normalize(
                     mean=[0.0, 0.0, 0.0],
                     std=[1.0, 1.0, 1.0],
@@ -52,6 +54,7 @@ def setup_loaders(args):
     evaluation_transforms = A.Resize(64, 64)
     evaluation_images_transforms = A.Compose(
         [
+            A.CLAHE(p=1.0),
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
