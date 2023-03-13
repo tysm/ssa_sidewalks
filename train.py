@@ -13,18 +13,9 @@ import utils as U
 
 
 def setup_loaders(args):
-    training_transforms = A.Compose(
-        [
-            A.Resize(256, 256),
-            A.Rotate(),
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
-        ]
-    )
+    training_transforms = A.Resize(64, 64)
     training_images_transforms = A.Compose(
         [
-            A.ColorJitter(),
-            A.GaussianBlur(),
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
@@ -34,9 +25,31 @@ def setup_loaders(args):
         ]
     )
     training_masks_transforms = ToTensorV2()
+
+    if args.data_augmentation:
+        training_transforms = A.Compose(
+            [
+                A.Resize(64, 64),
+                A.Rotate(),
+                A.HorizontalFlip(),
+                A.VerticalFlip(),
+            ]
+        )
+        training_images_transforms = A.Compose(
+            [
+                A.ColorJitter(),
+                A.GaussianBlur(),
+                A.Normalize(
+                    mean=[0.0, 0.0, 0.0],
+                    std=[1.0, 1.0, 1.0],
+                    max_pixel_value=255.0,
+                ),
+                ToTensorV2()
+            ]
+        )
     training_loader = D.setup_loader(args.training_dataset_dir, training_transforms, training_images_transforms, training_masks_transforms, args.batch_size, args.workers, True, True)
 
-    evaluation_transforms = A.Resize(256, 256)
+    evaluation_transforms = A.Resize(64, 64)
     evaluation_images_transforms = A.Compose(
         [
             A.Normalize(
@@ -59,14 +72,15 @@ def main():
     parser.add_argument("--training-dataset-dir", type=str, required=True)
     parser.add_argument("--evaluation-dataset-dir", type=str, required=True)
     parser.add_argument("--architecture", type=str, required=True)
-    parser.add_argument("--pretrained", type=bool, action="store_true", default=False)
+    parser.add_argument("--pretrained", action="store_true", default=False)
+    parser.add_argument("--data-augmentation", action="store_true", default=False)
     parser.add_argument("--batch-size", type=int, required=True)
     parser.add_argument("--workers", type=int, required=True)
     parser.add_argument("--epochs", type=int, required=True)
     parser.add_argument("--learning-rate", type=float, required=True)
-    parser.add_argument("--checkpoints-dir", type=str, required=True)
+    parser.add_argument("--checkpoints-dir", type=str)
     parser.add_argument("--load-checkpoint-path", type=str)
-    parser.add_argument("--logs-dir", type=str, required=True)
+    parser.add_argument("--logs-dir", type=str)
     parser.add_argument("--wandb-project", type=str)
     parser.add_argument("--wandb-key", type=str)
     args = parser.parse_args()
@@ -83,6 +97,7 @@ def main():
                 "evaluation-dataset-dir": args.evaluation_dataset_dir,
                 "architecture": args.architecture,
                 "pretrained": args.pretrained,
+                "data-augmentation": args.data_augmentation,
                 "batch-size": args.batch_size,
                 "workers": args.workers,
                 "epochs": args.epochs,
@@ -101,13 +116,16 @@ def main():
     scaler = torch.cuda.amp.GradScaler()
 
     checkpoint = {}
-    if args.load_checkpoint_path:
-        checkpoint, model, optimizer = U.load_checkpoint(args.load_checkpoint_path, model, optimizer, wandb_run)
+    if args.load_checkpoint_path is not None:
+        checkpoint, model, optimizer = U.load_checkpoint(args.load_checkpoint_path, model, optimizer, wandb_run=wandb_run)
 
     for epoch_index in range(checkpoint["epoch"]+1 if checkpoint else 0, args.epochs):
-        U.train(epoch_index, training_loader, model, criterion, optimizer, scaler, device, wandb_run)
-        metrics = U.evaluate(epoch_index, evaluation_loader, model, criterion, device, args.logs_dir, wandb_run)
-        checkpoint = U.save_checkpoint(args.checkpoints_dir, epoch_index, model, optimizer, metrics, wandb_run)
+        U.train(epoch_index, training_loader, model, criterion, optimizer, scaler, device, wandb_run=wandb_run)
+        metrics = U.evaluate(epoch_index, evaluation_loader, model, criterion, device, logs_dir=args.logs_dir, wandb_run=wandb_run)
+
+        checkpoint = U.build_checkpoint(epoch_index, model, optimizer, metrics)
+        if args.checkpoints_dir is not None:
+            U.save_checkpoint(epoch_index, checkpoint, args.checkpoints_dir, wandb_run=wandb_run)
 
 
 if __name__ == "__main__":
