@@ -4,11 +4,6 @@ from torchvision import models
 from networks.utils import DoubleConv2dBnReluConv1x1, resize, scale_as
 
 
-class AttentionHead(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-
 class HMSANet(nn.Module):
     def __init__(self, in_channels, out_channels, pretrained=True):
         super().__init__()
