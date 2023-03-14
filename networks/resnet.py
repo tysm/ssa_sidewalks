@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torchvision import models
 
-from networks.utils import DoubleConv2dBnReluConv1x1
+from networks.utils import DoubleConv2dBnReluConv1x1, scale_as
 
 
 class ResNet(nn.Module):
@@ -28,4 +28,4 @@ class ResNet(nn.Module):
         self.head = DoubleConv2dBnReluConv1x1(backbone_out_channels, 256, out_channels)
 
     def forward(self, x):
-        return self.head(self.backbone(x))
+        return self.head(scale_as(self.backbone(x), x))
